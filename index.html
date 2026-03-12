@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Filezap ⚡ — Convert. Preview. Done.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== DESIGN TOKENS ===== */
+    :root {
+      --yellow: #FFE500;
+      --cyan: #00F0FF;
+      --red: #FF2D55;
+      --black: #0A0A0A;
+      --white: #FAFAF5;
+      --bg: #FAFAF5;
+      --surface: #FFFFFF;
+      --text: #0A0A0A;
+      --border: #0A0A0A;
+      --shadow: 5px 5px 0px #0A0A0A;
+      --shadow-lg: 8px 8px 0px #0A0A0A;
+      --shadow-xl: 12px 12px 0px #0A0A0A;
+      --radius: 4px;
+      --stroke: 2.5px;
+    }
+    [data-theme="dark"] {
+      --bg: #0A0A0A;
+      --surface: #1A1A1A;
+      --text: #FAFAF5;
+      --border: #FAFAF5;
+      --shadow: 5px 5px 0px #FFE500;
+      --shadow-lg: 8px 8px 0px #FFE500;
+      --shadow-xl: 12px 12px 0px #FFE500;
+    }
+
+    /* ===== RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Space Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+      overflow-x: hidden;
+    }
+
+    /* ===== NOISE TEXTURE OVERLAY ===== */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999; opacity: 0.4;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--yellow); border: 2px solid var(--border); }
+
+    /* ===== NAVBAR ===== */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2.5rem;
+      background: var(--bg);
+      border-bottom: var(--stroke) solid var(--border);
+    }
+    .logo {
+      display: flex; align-items: center; gap: 0.6rem;
+      text-decoration: none; color: var(--text);
+    }
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: var(--yellow);
+      border: var(--stroke) solid var(--border);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 3px 3px 0 var(--border);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .logo:hover .logo-icon { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--border); }
+    .logo-text { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+    .logo-text span { color: var(--red); }
+
+    .nav-links { display: flex; align-items: center; gap: 0.25rem; }
+    .nav-links a {
+      font-family: 'Space Mono', monospace; font-size: 0.8rem; font-weight: 700;
+      text-decoration: none; color: var(--text);
+      padding: 0.4rem 0.9rem;
+      border: var(--stroke) solid transparent;
+      border-radius: var(--radius);
+      transition: all 0.15s;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .nav-links a:hover {
+      background: var(--yellow); border-color: var(--border);
+      box-shadow: var(--shadow);
+    }
+    .nav-links a.active {
+      background: var(--black); color: var(--yellow);
+      border-color: var(--border);
+    }
+    [data-theme="dark"] .nav-links a.active { background: var(--yellow); color: var(--black); }
+
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+    .btn-theme {
+      width: 38px; height: 38px; cursor: pointer;
+      background: var(--surface); border: var(--stroke) solid var(--border);
+      border-radius: var(--radius); font-size: 1.1rem;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow); transition: all 0.15s;
+    }
+    .btn-theme:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); }
+    .btn-login {
+      font-family: 'Space Mono', monospace; font-size: 0.8rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 0.45rem 1.1rem; cursor: pointer;
+      background: transparent; color: var(--text);
+      border: var(--stroke) solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      transition: all 0.15s; text-decoration: none;
+    }
+    .btn-login:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); }
+    .btn-cta {
+      font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 0.5rem 1.2rem; cursor: pointer;
+      background: var(--red); color: #fff;
+      border: var(--stroke) solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      transition: all 0.15s; text-decoration: none;
+    }
+    .btn-cta:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); background: var(--yellow); color: var(--black); }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: calc(100vh - 65px);
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center; gap: 3rem;
+      padding: 4rem 2.5rem;
+      position: relative; overflow: hidden;
+    }
+    .hero-bg-shape {
+      position: absolute; right: -80px; top: -80px;
+      width: 520px; height: 520px;
+      background: var(--yellow);
+      border-radius: 50%;
+      opacity: 0.12;
+      animation: pulse-slow 6s ease-in-out infinite;
+    }
+    .hero-bg-shape2 {
+      position: absolute; left: -60px; bottom: -60px;
+      width: 320px; height: 320px;
+      background: var(--cyan);
+      border-radius: 50%;
+      opacity: 0.1;
+      animation: pulse-slow 8s ease-in-out infinite reverse;
+    }
+    @keyframes pulse-slow {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .hero-left { position: relative; z-index: 1; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--cyan); color: var(--black);
+      border: var(--stroke) solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.3rem 0.75rem;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+      box-shadow: var(--shadow); margin-bottom: 1.5rem;
+      animation: bounceIn 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    }
+    .badge-dot { width: 8px; height: 8px; background: var(--red); border-radius: 50%; animation: blink 1.2s infinite; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+    @keyframes bounceIn {
+      0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+      70% { transform: scale(1.05) rotate(1deg); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif; font-size: clamp(3rem, 5.5vw, 5.5rem);
+      font-weight: 800; line-height: 1;
+      letter-spacing: -2px; margin-bottom: 1.25rem;
+      animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+    }
+    .hero-title .line2 { color: var(--red); display: block; }
+    .hero-title .line3 {
+      display: block;
+      -webkit-text-stroke: 2px var(--text);
+      color: transparent;
+    }
+    [data-theme="dark"] .hero-title .line3 { -webkit-text-stroke-color: var(--white); }
+
+    .hero-sub {
+      font-size: 1rem; line-height: 1.7; color: var(--text); opacity: 0.75;
+      max-width: 480px; margin-bottom: 2rem;
+      animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+    }
+    .hero-actions {
+      display: flex; gap: 1rem; align-items: center;
+      animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+    }
+    .btn-hero {
+      font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 0.85rem 2rem; cursor: pointer;
+      background: var(--black); color: var(--yellow);
+      border: var(--stroke) solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow-xl);
+      transition: all 0.15s; text-decoration: none; display: inline-block;
+    }
+    [data-theme="dark"] .btn-hero { background: var(--yellow); color: var(--black); }
+    .btn-hero:hover { transform: translate(-4px,-4px); box-shadow: 16px 16px 0 var(--border); }
+    .btn-hero-ghost {
+      font-family: 'Space Mono', monospace; font-size: 0.85rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 0.85rem 1.5rem; cursor: pointer;
+      background: transparent; color: var(--text);
+      border: var(--stroke) solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      transition: all 0.15s; text-decoration: none; display: inline-block;
+    }
+    .btn-hero-ghost:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); background: var(--surface); }
+
+    .hero-stats {
+      display: flex; gap: 2rem; margin-top: 2.5rem;
+      animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+    }
+    .stat { display: flex; flex-direction: column; gap: 0.1rem; }
+    .stat-num { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; }
+    .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.55; }
+
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* ===== MASCOT ===== */
+    .hero-right {
+      display: flex; justify-content: center; align-items: center;
+      position: relative; z-index: 1;
+      animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+    }
+    .mascot-container {
+      position: relative; width: 380px; height: 400px;
+    }
+    .mascot-bg {
+      position: absolute; inset: 0;
+      background: var(--yellow);
+      border: var(--stroke) solid var(--border);
+      border-radius: 40% 60% 55% 45% / 45% 40% 60% 55%;
+      box-shadow: var(--shadow-xl);
+      animation: morph 8s ease-in-out infinite;
+    }
+    @keyframes morph {
+      0%, 100% { border-radius: 40% 60% 55% 45% / 45% 40% 60% 55%; }
+      33% { border-radius: 55% 45% 40% 60% / 60% 55% 45% 40%; }
+      66% { border-radius: 45% 55% 60% 40% / 55% 60% 40% 45%; }
+    }
+    .mascot-svg {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -55%);
+      width: 260px; height: 260px;
+      animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(-50%, -55%); }
+      50% { transform: translate(-50%, -62%); }
+    }
+    .floating-tag {
+      position: absolute;
+      background: var(--surface); border: var(--stroke) solid var(--border);
+      border-radius: var(--radius); padding: 0.4rem 0.8rem;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      box-shadow: var(--shadow); white-space: nowrap;
+      font-family: 'Caveat', cursive; font-size: 0.95rem;
+    }
+    .tag1 { top: 10%; right: -20px; background: var(--cyan); animation: wiggle 3s ease-in-out infinite; }
+    .tag2 { bottom: 15%; left: -25px; background: var(--red); color: #fff; animation: wiggle 4s ease-in-out infinite reverse; }
+    .tag3 { bottom: 38%; right: -15px; background: var(--yellow); animation: wiggle 5s ease-in-out infinite 1s; }
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(-2deg); }
+      50% { transform: rotate(3deg); }
+    }
+
+    /* ===== FEATURES ===== */
+    .section { padding: 5rem 2.5rem; }
+    .section-label {
+      font-family: 'Caveat', cursive; font-size: 1.3rem; font-weight: 700;
+      color: var(--red); margin-bottom: 0.5rem;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif; font-size: clamp(2rem, 3.5vw, 3.2rem);
+      font-weight: 800; letter-spacing: -1px; margin-bottom: 3rem;
+      max-width: 600px;
+    }
+    .section-title span { color: var(--red); }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+    }
+    .feat-card {
+      background: var(--surface);
+      border: var(--stroke) solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+      transition: all 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .feat-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    }
+    .feat-card:nth-child(1)::before { background: var(--yellow); }
+    .feat-card:nth-child(2)::before { background: var(--cyan); }
+    .feat-card:nth-child(3)::before { background: var(--red); }
+    .feat-card:nth-child(4)::before { background: var(--red); }
+    .feat-card:nth-child(5)::before { background: var(--yellow); }
+    .feat-card:nth-child(6)::before { background: var(--cyan); }
+    .feat-card:hover { transform: translate(-4px,-4px); box-shadow: var(--shadow-xl); }
+
+    .feat-icon {
+      width: 48px; height: 48px;
+      border: var(--stroke) solid var(--border);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 1rem;
+      box-shadow: 3px 3px 0 var(--border);
+    }
+    .feat-card:nth-child(1) .feat-icon { background: var(--yellow); }
+    .feat-card:nth-child(2) .feat-icon { background: var(--cyan); }
+    .feat-card:nth-child(3) .feat-icon { background: var(--red); }
+    .feat-card:nth-child(4) .feat-icon { background: var(--red); }
+    .feat-card:nth-child(5) .feat-icon { background: var(--yellow); }
+    .feat-card:nth-child(6) .feat-icon { background: var(--cyan); }
+
+    .feat-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .feat-desc { font-size: 0.8rem; line-height: 1.6; opacity: 0.7; }
+
+    /* ===== HOW IT WORKS ===== */
+    .how-section {
+      padding: 5rem 2.5rem;
+      background: var(--black);
+      color: var(--white);
+      position: relative; overflow: hidden;
+    }
+    [data-theme="dark"] .how-section { background: var(--yellow); color: var(--black); }
+    .how-section .section-label { color: var(--cyan); }
+    [data-theme="dark"] .how-section .section-label { color: var(--red); }
+    .how-section .section-title { color: var(--white); }
+    [data-theme="dark"] .how-section .section-title { color: var(--black); }
+    .how-section .section-title span { color: var(--yellow); }
+    [data-theme="dark"] .how-section .section-title span { color: var(--red); }
+
+    .steps { display: flex; align-items: flex-start; gap: 0; position: relative; }
+    .step {
+      flex: 1; padding: 0 1.5rem; position: relative;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    .step:not(:last-child)::after {
+      content: '→';
+      position: absolute; right: -18px; top: 28px;
+      font-size: 1.5rem; color: var(--yellow);
+    }
+    [data-theme="dark"] .step:not(:last-child)::after { color: var(--red); }
+    .step-num {
+      width: 60px; height: 60px;
+      background: var(--yellow); color: var(--black);
+      border: var(--stroke) solid var(--white);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800;
+      box-shadow: 4px 4px 0 var(--white);
+      margin-bottom: 1rem;
+    }
+    [data-theme="dark"] .step-num { border-color: var(--black); box-shadow: 4px 4px 0 var(--black); background: var(--red); color: var(--white); }
+    .step-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .step-desc { font-size: 0.75rem; opacity: 0.65; line-height: 1.5; max-width: 180px; }
+
+    /* ===== FORMAT PILLS ===== */
+    .formats-section { padding: 5rem 2.5rem; }
+    .formats-marquee {
+      display: flex; gap: 0.75rem; overflow: hidden;
+      margin-top: 2rem; margin-bottom: 1rem;
+    }
+    .marquee-track {
+      display: flex; gap: 0.75rem;
+      animation: marquee 20s linear infinite;
+      min-width: max-content;
+    }
+    .marquee-track2 { animation-direction: reverse; animation-duration: 25s; }
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .format-pill {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--surface);
+      border: var(--stroke) solid var(--border);
+      border-radius: 999px;
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      white-space: nowrap; box-shadow: 3px 3px 0 var(--border);
+    }
+    .pill-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ===== TESTIMONIALS ===== */
+    .testi-section { padding: 5rem 2.5rem; background: var(--surface); border-top: var(--stroke) solid var(--border); border-bottom: var(--stroke) solid var(--border); }
+    .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    .testi-card {
+      background: var(--bg);
+      border: var(--stroke) solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+      box-shadow: var(--shadow);
+      transition: all 0.2s;
+    }
+    .testi-card:hover { transform: translate(-3px,-3px); box-shadow: var(--shadow-lg); }
+    .testi-quote { font-family: 'Caveat', cursive; font-size: 1.15rem; line-height: 1.5; margin-bottom: 1rem; }
+    .testi-author { display: flex; align-items: center; gap: 0.6rem; }
+    .testi-avatar {
+      width: 36px; height: 36px; border-radius: var(--radius);
+      border: var(--stroke) solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 700;
+    }
+    .testi-name { font-size: 0.75rem; font-weight: 700; display: block; }
+    .testi-role { font-size: 0.65rem; opacity: 0.55; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stars { color: var(--yellow); font-size: 0.85rem; margin-bottom: 0.75rem; }
+
+    /* ===== CTA BANNER ===== */
+    .cta-section {
+      padding: 5rem 2.5rem;
+      text-align: center;
+    }
+    .cta-box {
+      max-width: 700px; margin: 0 auto;
+      background: var(--yellow);
+      border: var(--stroke) solid var(--border);
+      border-radius: var(--radius);
+      padding: 3.5rem 2.5rem;
+      box-shadow: var(--shadow-xl);
+      position: relative; overflow: hidden;
+    }
+    .cta-box::before {
+      content: '⚡';
+      position: absolute; right: 1.5rem; top: 1rem;
+      font-size: 5rem; opacity: 0.15;
+    }
+    .cta-box h2 {
+      font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800;
+      letter-spacing: -1px; margin-bottom: 0.75rem; color: var(--black);
+    }
+    .cta-box p { font-size: 0.9rem; color: var(--black); opacity: 0.7; margin-bottom: 1.75rem; }
+    .cta-box .btn-hero { background: var(--black); color: var(--yellow); }
+    .cta-box .btn-hero:hover { box-shadow: 16px 16px 0 var(--black); }
+
+    /* ===== FOOTER ===== */
+    footer {
+      border-top: var(--stroke) solid var(--border);
+      padding: 2.5rem;
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: center; gap: 1rem;
+    }
+    .footer-left { display: flex; flex-direction: column; gap: 0.5rem; }
+    .footer-tagline { font-family: 'Caveat', cursive; font-size: 1rem; opacity: 0.5; }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a {
+      font-size: 0.75rem; text-decoration: none; color: var(--text);
+      opacity: 0.6; text-transform: uppercase; letter-spacing: 0.5px;
+      transition: opacity 0.15s;
+    }
+    .footer-links a:hover { opacity: 1; }
+    .footer-copy { font-size: 0.7rem; opacity: 0.4; }
+
+    /* ===== SKIP LINK (A11Y) ===== */
+    .skip-link {
+      position: absolute; top: -100px; left: 1rem;
+      background: var(--yellow); color: var(--black);
+      padding: 0.5rem 1rem; font-weight: 700; border-radius: var(--radius);
+      text-decoration: none; z-index: 9999;
+      transition: top 0.2s;
+    }
+    .skip-link:focus { top: 1rem; }
+
+    /* ===== HAND-DRAWN UNDERLINE ===== */
+    .scribble {
+      display: inline; position: relative;
+    }
+    .scribble::after {
+      content: '';
+      position: absolute; bottom: -4px; left: 0; right: 0; height: 6px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='6'%3E%3Cpath d='M0 3 Q25 0 50 3 Q75 6 100 3 Q125 0 150 3 Q175 6 200 3' stroke='%23FF2D55' stroke-width='2.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: repeat-x; background-size: 200px 6px;
+    }
+
+    /* ===== ANNOUNCEMENT BAR ===== */
+    .announcement {
+      background: var(--cyan); color: var(--black);
+      border-bottom: var(--stroke) solid var(--border);
+      text-align: center; padding: 0.5rem;
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .announcement a { color: var(--black); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <div class="announcement" role="banner" aria-label="Announcement">
+    ⚡ Filezap is free forever. No sign-up needed to convert. &nbsp;
+    <a href="converter.html">Try it now →</a>
+  </div>
+
+  <nav role="navigation" aria-label="Main navigation">
+    <a href="index.html" class="logo" aria-label="Filezap home">
+      <div class="logo-icon" aria-hidden="true">⚡</div>
+      <span class="logo-text">File<span>zap</span></span>
+    </a>
+    <div class="nav-links" role="list">
+      <a href="converter.html" role="listitem">Convert</a>
+      <a href="blog.html" role="listitem">Blog</a>
+      <a href="#formats" role="listitem">Formats</a>
+      <a href="#features" role="listitem">Features</a>
+    </div>
+    <div class="nav-right">
+      <button class="btn-theme" id="themeToggle" aria-label="Toggle dark/light mode" title="Toggle theme">🌙</button>
+      <a href="#" class="btn-login" aria-label="Sign in">Sign In</a>
+      <a href="converter.html" class="btn-cta" aria-label="Start converting files">Start Free</a>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero" aria-label="Hero">
+      <div class="hero-bg-shape" aria-hidden="true"></div>
+      <div class="hero-bg-shape2" aria-hidden="true"></div>
+      <div class="hero-left">
+        <div class="hero-badge" role="status" aria-live="polite">
+          <span class="badge-dot" aria-hidden="true"></span>
+          100% Free · No Signup Required
+        </div>
+        <h1 class="hero-title">
+          Convert.<br>
+          <span class="line2">Preview.</span>
+          <span class="line3">Done.</span>
+        </h1>
+        <p class="hero-sub">
+          Stop juggling apps. Drop your file, pick a format, preview instantly — and download only if you need to. That's it. No friction, no nonsense.
+        </p>
+        <div class="hero-actions">
+          <a href="converter.html" class="btn-hero" aria-label="Open the file converter">Zap a File ⚡</a>
+          <a href="blog.html" class="btn-hero-ghost" aria-label="Read the blog">Learn Formats →</a>
+        </div>
+        <div class="hero-stats" aria-label="Site statistics">
+          <div class="stat">
+            <span class="stat-num">50+</span>
+            <span class="stat-label">Formats</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">0$</span>
+            <span class="stat-label">Cost</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">3s</span>
+            <span class="stat-label">Avg convert</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MASCOT -->
+      <div class="hero-right" aria-hidden="true">
+        <div class="mascot-container">
+          <div class="mascot-bg"></div>
+          <svg class="mascot-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- Body -->
+            <rect x="40" y="70" width="120" height="110" rx="16" fill="#1A1A1A" stroke="#0A0A0A" stroke-width="3"/>
+            <!-- Face bg -->
+            <rect x="55" y="85" width="90" height="70" rx="10" fill="#FAFAF5" stroke="#0A0A0A" stroke-width="2"/>
+            <!-- Eyes -->
+            <circle cx="80" cy="112" r="10" fill="#0A0A0A"/>
+            <circle cx="120" cy="112" r="10" fill="#0A0A0A"/>
+            <circle cx="84" cy="108" r="3" fill="white"/>
+            <circle cx="124" cy="108" r="3" fill="white"/>
+            <!-- Smile -->
+            <path d="M82 132 Q100 144 118 132" stroke="#0A0A0A" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <!-- Blush -->
+            <ellipse cx="68" cy="128" rx="8" ry="5" fill="#FF2D55" opacity="0.4"/>
+            <ellipse cx="132" cy="128" rx="8" ry="5" fill="#FF2D55" opacity="0.4"/>
+            <!-- Lightning bolt top -->
+            <path d="M92 20 L80 55 L96 55 L80 90 L120 45 L104 45 L115 20 Z" fill="#FFE500" stroke="#0A0A0A" stroke-width="2.5" stroke-linejoin="round"/>
+            <!-- Arms -->
+            <rect x="10" y="90" width="32" height="18" rx="9" fill="#1A1A1A" stroke="#0A0A0A" stroke-width="2.5" transform="rotate(-15 26 99)"/>
+            <rect x="158" y="90" width="32" height="18" rx="9" fill="#1A1A1A" stroke="#0A0A0A" stroke-width="2.5" transform="rotate(15 174 99)"/>
+            <!-- Legs -->
+            <rect x="65" y="175" width="28" height="20" rx="8" fill="#1A1A1A" stroke="#0A0A0A" stroke-width="2.5"/>
+            <rect x="107" y="175" width="28" height="20" rx="8" fill="#1A1A1A" stroke="#0A0A0A" stroke-width="2.5"/>
+            <!-- Shoes -->
+            <rect x="60" y="190" width="36" height="14" rx="6" fill="#FFE500" stroke="#0A0A0A" stroke-width="2"/>
+            <rect x="104" y="190" width="36" height="14" rx="6" fill="#FFE500" stroke="#0A0A0A" stroke-width="2"/>
+          </svg>
+          <div class="floating-tag tag1">Zap! ⚡</div>
+          <div class="floating-tag tag2">50MB limit</div>
+          <div class="floating-tag tag3">Preview first!</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-section" aria-labelledby="how-title">
+      <p class="section-label">// Simple as 1-2-3</p>
+      <h2 class="section-title" id="how-title">How it <span>works</span></h2>
+      <div class="steps" role="list">
+        <div class="step" role="listitem">
+          <div class="step-num" aria-hidden="true">1</div>
+          <h3 class="step-title">Drop Your File</h3>
+          <p class="step-desc">Drag and drop any file (up to 50MB) onto the converter. We handle images, docs, and video.</p>
+        </div>
+        <div class="step" role="listitem">
+          <div class="step-num" aria-hidden="true">2</div>
+          <h3 class="step-title">Pick a Format</h3>
+          <p class="step-desc">Choose what you want to convert to. We show only compatible formats for your file type.</p>
+        </div>
+        <div class="step" role="listitem">
+          <div class="step-num" aria-hidden="true">3</div>
+          <h3 class="step-title">Preview Instantly</h3>
+          <p class="step-desc">See the result right in the browser before downloading a single byte. Like magic.</p>
+        </div>
+        <div class="step" role="listitem">
+          <div class="step-num" aria-hidden="true">4</div>
+          <h3 class="step-title">Download or Share</h3>
+          <p class="step-desc">Download the converted file or grab a timed share link. Your files are deleted after the session.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="section" id="features" aria-labelledby="feat-title">
+      <p class="section-label">// What makes us different</p>
+      <h2 class="section-title" id="feat-title">Everything you need, <span class="scribble">nothing you don't</span></h2>
+      <div class="features-grid" role="list">
+        <div class="feat-card" role="listitem">
+          <div class="feat-icon" aria-hidden="true">👁️</div>
+          <h3 class="feat-title">Preview Before Download</h3>
+          <p class="feat-desc">See exactly what your converted file looks like before committing to a download. No surprises.</p>
+        </div>
+        <div class="feat-card" role="listitem">
+          <div class="feat-icon" aria-hidden="true">🗂️</div>
+          <h3 class="feat-title">Queue System</h3>
+          <p class="feat-desc">Upload multiple files, convert them one by one in order. Stay organized without chaos.</p>
+        </div>
+        <div class="feat-card" role="listitem">
+          <div class="feat-icon" aria-hidden="true">🔒</div>
+          <h3 class="feat-title">Privacy First</h3>
+          <p class="feat-desc">Files are deleted immediately after your session ends. We don't store, analyze, or sell your data.</p>
+        </div>
+        <div class="feat-card" role="listitem">
+          <div class="feat-icon" aria-hidden="true">✂️</div>
+          <h3 class="feat-title">Edit Before Converting</h3>
+          <p class="feat-desc">Crop & resize images or trim video clips before converting. No extra tools needed.</p>
+        </div>
+        <div class="feat-card" role="listitem">
+          <div class="feat-icon" aria-hidden="true">🔗</div>
+          <h3 class="feat-title">Expiring Share Links</h3>
+          <p class="feat-desc">Generate a timed share link for your converted file. Send it, they download it, it's gone.</p>
+        </div>
+        <div class="feat-card" role="listitem">
+          <div class="feat-icon" aria-hidden="true">⚡</div>
+          <h3 class="feat-title">Blazing Fast</h3>
+          <p class="feat-desc">Simple conversions run right in your browser. Heavy lifting happens on our servers — silently.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FORMAT PILLS -->
+    <section class="formats-section" id="formats" aria-labelledby="fmt-title">
+      <p class="section-label">// 50+ supported formats</p>
+      <h2 class="section-title" id="fmt-title">Every format <span>you'll ever need</span></h2>
+      <div class="formats-marquee" aria-label="Supported image formats" role="region">
+        <div class="marquee-track" aria-hidden="true">
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>PNG</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>JPG</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>WEBP</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>SVG</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>GIF</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>PDF</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>DOCX</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>TXT</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>MP4</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>MP3</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>AVI</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>MOV</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>OGG</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>WAV</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>MD</span>
+          <!-- repeat for seamless loop -->
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>PNG</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>JPG</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>WEBP</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>SVG</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>GIF</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>PDF</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>DOCX</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>TXT</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>MP4</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>MP3</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>AVI</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>MOV</span>
+        </div>
+      </div>
+      <div class="formats-marquee">
+        <div class="marquee-track marquee-track2" aria-hidden="true">
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>HEIC</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>BMP</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>TIFF</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>ICO</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>XLSX</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>CSV</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>HTML</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>RTF</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>FLAC</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>AAC</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>MKV</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>WEBM</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>OGV</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>EPUB</span>
+          <!-- repeat -->
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>HEIC</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>BMP</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>TIFF</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>ICO</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>XLSX</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--cyan)"></span>CSV</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--red)"></span>HTML</span>
+          <span class="format-pill"><span class="pill-dot" style="background:var(--yellow)"></span>RTF</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="testi-section" aria-labelledby="testi-title">
+      <p class="section-label">// People love it</p>
+      <h2 class="section-title" id="testi-title">Don't take our <span>word for it</span></h2>
+      <div class="testi-grid" role="list">
+        <div class="testi-card" role="listitem">
+          <div class="stars" aria-label="5 stars">★★★★★</div>
+          <p class="testi-quote">"Finally! I just wanted to read that DOCX without downloading Word. Filezap saved me 20 minutes of frustration."</p>
+          <div class="testi-author">
+            <div class="testi-avatar" style="background:var(--cyan)" aria-hidden="true">A</div>
+            <div>
+              <span class="testi-name">Alex Kim</span>
+              <span class="testi-role">Product Designer</span>
+            </div>
+          </div>
+        </div>
+        <div class="testi-card" role="listitem">
+          <div class="stars" aria-label="5 stars">★★★★★</div>
+          <p class="testi-quote">"The preview before download feature is genius. I convert HEIC to JPG constantly and this is the fastest tool I've found."</p>
+          <div class="testi-author">
+            <div class="testi-avatar" style="background:var(--yellow)" aria-hidden="true">S</div>
+            <div>
+              <span class="testi-name">Sara Okafor</span>
+              <span class="testi-role">Photographer</span>
+            </div>
+          </div>
+        </div>
+        <div class="testi-card" role="listitem">
+          <div class="stars" aria-label="5 stars">★★★★★</div>
+          <p class="testi-quote">"My whole team uses Filezap now. The queue system is perfect for batch image work. And it's free? Come on."</p>
+          <div class="testi-author">
+            <div class="testi-avatar" style="background:var(--red); color:white" aria-hidden="true">M</div>
+            <div>
+              <span class="testi-name">Marcus Chen</span>
+              <span class="testi-role">Frontend Dev</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section" aria-labelledby="cta-title">
+      <div class="cta-box">
+        <h2 id="cta-title">Ready to zap some files?</h2>
+        <p>Free forever. No sign-up. No watermarks. Just results.</p>
+        <a href="converter.html" class="btn-hero" aria-label="Go to the converter">Open Converter ⚡</a>
+      </div>
+    </section>
+  </main>
+
+  <footer role="contentinfo">
+    <div class="footer-left">
+      <a href="index.html" class="logo" aria-label="Filezap home" style="text-decoration:none;color:inherit;">
+        <div class="logo-icon" style="width:32px;height:32px;font-size:1rem;">⚡</div>
+        <span class="logo-text" style="font-size:1.1rem;">File<span>zap</span></span>
+      </a>
+      <p class="footer-tagline">Convert. Preview. Done.</p>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="converter.html">Convert</a>
+        <a href="blog.html">Blog</a>
+        <a href="#formats">Formats</a>
+        <a href="#features">Features</a>
+        <a href="#">Privacy</a>
+      </nav>
+    </div>
+    <p class="footer-copy">© 2025 Filezap. Free forever.</p>
+  </footer>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    let dark = false;
+    toggle.addEventListener('click', () => {
+      dark = !dark;
+      html.setAttribute('data-theme', dark ? 'dark' : 'light');
+      toggle.textContent = dark ? '☀️' : '🌙';
+      toggle.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+    });
+  </script>
+</body>
+</html>

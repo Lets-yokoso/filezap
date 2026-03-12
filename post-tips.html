@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>7 Image Conversion Mistakes — Filezap ⚡</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{--yellow:#FFE500;--cyan:#00F0FF;--red:#FF2D55;--black:#0A0A0A;--white:#FAFAF5;--bg:#FAFAF5;--surface:#FFFFFF;--surface2:#F0F0EB;--text:#0A0A0A;--border:#0A0A0A;--shadow:4px 4px 0 #0A0A0A;--shadow-lg:7px 7px 0 #0A0A0A;--shadow-xl:11px 11px 0 #0A0A0A;--radius:4px;--stroke:2.5px;}
+    [data-theme="dark"]{--bg:#0A0A0A;--surface:#1A1A1A;--surface2:#222;--text:#FAFAF5;--border:#FAFAF5;--shadow:4px 4px 0 #FFE500;--shadow-lg:7px 7px 0 #FFE500;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Space Mono',monospace;background:var(--bg);color:var(--text);transition:background .3s,color .3s;overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.35;}
+    ::-webkit-scrollbar{width:8px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--yellow);border:2px solid var(--border);}
+    nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:.85rem 2.5rem;background:var(--bg);border-bottom:var(--stroke) solid var(--border);}
+    .logo{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--text);}
+    .logo-icon{width:36px;height:36px;background:var(--yellow);border:var(--stroke) solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:3px 3px 0 var(--border);}
+    .logo-text{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;}
+    .logo-text span{color:var(--red);}
+    .nav-right{display:flex;align-items:center;gap:.6rem;}
+    .btn-back{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:.4rem .9rem;background:transparent;color:var(--text);border:var(--stroke) solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);transition:all .15s;text-decoration:none;}
+    .btn-back:hover{transform:translate(-2px,-2px);box-shadow:var(--shadow-lg);}
+    .btn-theme{width:34px;height:34px;cursor:pointer;background:var(--surface);border:var(--stroke) solid var(--border);border-radius:var(--radius);font-size:1rem;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all .15s;}
+    .btn-theme:hover{transform:translate(-2px,-2px);box-shadow:var(--shadow-lg);}
+    .btn-cta{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:800;text-transform:uppercase;padding:.45rem 1.1rem;cursor:pointer;background:var(--red);color:#fff;border:var(--stroke) solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);transition:all .15s;text-decoration:none;}
+    .btn-cta:hover{transform:translate(-2px,-2px);box-shadow:var(--shadow-lg);background:var(--yellow);color:var(--black);}
+    .article-wrap{max-width:780px;margin:0 auto;padding:3rem 2rem 5rem;}
+    .article-hero{background:var(--yellow);border:var(--stroke) solid var(--border);border-radius:var(--radius);padding:3rem 2.5rem;margin-bottom:2.5rem;box-shadow:var(--shadow-xl);position:relative;overflow:hidden;}
+    .article-hero-bg{position:absolute;right:-40px;bottom:-40px;width:220px;height:220px;border-radius:50%;background:rgba(0,0,0,.06);}
+    .article-hero-emoji{font-size:4rem;display:block;margin-bottom:1rem;animation:float3 4s ease-in-out infinite;}
+    @keyframes float3{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    .article-tags{display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap;}
+    .article-tag{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:.2rem .6rem;border:var(--stroke) solid var(--black);border-radius:var(--radius);background:var(--black);color:var(--yellow);}
+    .article-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;letter-spacing:-1.5px;line-height:1.05;color:var(--black);margin-bottom:.75rem;}
+    .article-meta{font-size:.7rem;color:var(--black);opacity:.55;display:flex;gap:1rem;}
+    .article-body{font-size:.9rem;line-height:1.8;}
+    .article-body h2{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.5px;margin:2.5rem 0 .75rem;padding-bottom:.5rem;border-bottom:var(--stroke) solid var(--border);}
+    .article-body p{margin-bottom:1.1rem;opacity:.85;}
+    .article-body strong{font-weight:700;opacity:1;}
+    .article-body a{color:var(--red);text-decoration:none;font-weight:700;border-bottom:2px solid var(--red);}
+    .article-body a:hover{background:var(--red);color:#fff;padding:0 2px;}
+    /* MISTAKE CARDS */
+    .mistake-card{border:var(--stroke) solid var(--border);border-radius:var(--radius);margin:1.5rem 0;overflow:hidden;box-shadow:var(--shadow);transition:all .2s;}
+    .mistake-card:hover{transform:translate(-2px,-2px);box-shadow:var(--shadow-lg);}
+    .mistake-header{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;border-bottom:var(--stroke) solid var(--border);}
+    .mistake-num{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;border:var(--stroke) solid var(--border);border-radius:var(--radius);box-shadow:2px 2px 0 var(--border);}
+    .mistake-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;}
+    .mistake-body{padding:1rem 1.25rem;background:var(--surface);}
+    .mistake-body p{font-size:.8rem;line-height:1.6;opacity:.75;margin-bottom:.6rem;}
+    .mistake-body p:last-child{margin:0;}
+    .mistake-fix{display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:.25rem .65rem;border:var(--stroke) solid var(--border);border-radius:var(--radius);margin-top:.4rem;}
+    .callout{border:var(--stroke) solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin:1.75rem 0;box-shadow:var(--shadow);}
+    .callout-yellow{background:var(--yellow);color:var(--black);}
+    .callout-cyan{background:var(--cyan);color:var(--black);}
+    .callout-title{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;display:flex;align-items:center;gap:.4rem;}
+    .callout p{opacity:.85;font-size:.82rem;margin:0;}
+    .try-it-box{background:var(--black);border:var(--stroke) solid var(--border);border-radius:var(--radius);padding:2rem;margin:2.5rem 0;box-shadow:var(--shadow-xl);text-align:center;}
+    [data-theme="dark"] .try-it-box{background:var(--yellow);}
+    .try-it-box h3{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--yellow);margin-bottom:.5rem;}
+    [data-theme="dark"] .try-it-box h3{color:var(--black);}
+    .try-it-box p{font-size:.78rem;color:rgba(255,255,255,.6);margin-bottom:1.25rem;}
+    [data-theme="dark"] .try-it-box p{color:rgba(0,0,0,.6);}
+    .btn-try{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:800;text-transform:uppercase;padding:.65rem 1.5rem;cursor:pointer;background:var(--yellow);color:var(--black);border:var(--stroke) solid var(--yellow);border-radius:var(--radius);box-shadow:var(--shadow);transition:all .15s;text-decoration:none;display:inline-block;}
+    [data-theme="dark"] .btn-try{background:var(--black);color:var(--yellow);border-color:var(--black);}
+    .btn-try:hover{transform:translate(-2px,-2px);box-shadow:var(--shadow-lg);}
+    .related-section{margin-top:3rem;padding-top:2rem;border-top:var(--stroke) solid var(--border);}
+    .related-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:1rem;}
+    .related-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
+    .related-card{background:var(--surface);border:var(--stroke) solid var(--border);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow);text-decoration:none;color:var(--text);display:flex;gap:.75rem;align-items:flex-start;transition:all .15s;}
+    .related-card:hover{transform:translate(-2px,-2px);box-shadow:var(--shadow-lg);}
+    .related-icon{font-size:1.8rem;flex-shrink:0;}
+    .related-card h4{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;margin-bottom:.2rem;}
+    .related-card p{font-size:.7rem;opacity:.55;}
+    .read-progress{position:fixed;top:0;left:0;height:3px;background:var(--red);z-index:1000;transition:width .1s linear;width:0;}
+  </style>
+</head>
+<body>
+  <div class="read-progress" id="readProgress" role="progressbar" aria-label="Reading progress"></div>
+  <nav>
+    <a href="index.html" class="logo" aria-label="Filezap home">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">File<span>zap</span></span>
+    </a>
+    <div class="nav-right">
+      <a href="blog.html" class="btn-back">← Blog</a>
+      <button class="btn-theme" id="themeToggle" aria-label="Toggle theme">🌙</button>
+      <a href="converter.html" class="btn-cta">Convert Now ⚡</a>
+    </div>
+  </nav>
+
+  <main id="main">
+    <article class="article-wrap" aria-labelledby="article-title">
+      <header class="article-hero">
+        <div class="article-hero-bg" aria-hidden="true"></div>
+        <span class="article-hero-emoji" aria-hidden="true">💡</span>
+        <div class="article-tags">
+          <span class="article-tag">Tips & Tricks</span>
+          <span class="article-tag" style="background:transparent;color:var(--black);">Images</span>
+        </div>
+        <h1 class="article-title" id="article-title">7 Image Conversion Mistakes Everyone Makes (And How to Fix Them)</h1>
+        <div class="article-meta">
+          <span>📅 May 2025</span><span>⏱ 4 min read</span><span>✍️ Filezap Team</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+        <p>Converting images should be simple. And it is — when you know what you're doing. But these seven mistakes trip up everyone from beginners to people who've been doing it for years.</p>
+
+        <!-- MISTAKE 1 -->
+        <div class="mistake-card" aria-label="Mistake 1">
+          <div class="mistake-header">
+            <div class="mistake-num" style="background:var(--red);color:#fff;" aria-hidden="true">1</div>
+            <h2 class="mistake-title" style="margin:0;border:none;padding:0;">Converting PNG to JPG and expecting the same quality</h2>
+          </div>
+          <div class="mistake-body">
+            <p>PNG is lossless — every pixel is stored perfectly. JPG is lossy — it throws away data to shrink the file. When you convert PNG → JPG, you permanently lose quality. The bigger the compression, the worse it looks.</p>
+            <p>Worse: if you then convert that JPG back to PNG, you get a lossless copy of a degraded image. The damage is already done.</p>
+            <span class="mistake-fix" style="background:var(--cyan);color:var(--black);">✓ Fix: Set quality to 90%+ in Filezap when converting to JPG. Preview it before you download.</span>
+          </div>
+        </div>
+
+        <!-- MISTAKE 2 -->
+        <div class="mistake-card" aria-label="Mistake 2">
+          <div class="mistake-header">
+            <div class="mistake-num" style="background:var(--yellow);color:var(--black);" aria-hidden="true">2</div>
+            <h2 class="mistake-title" style="margin:0;border:none;padding:0;">Converting a logo or icon to JPG</h2>
+          </div>
+          <div class="mistake-body">
+            <p>Logos have sharp edges, flat colors, and often a transparent background. JPG handles none of these well. You'll get ugly compression artifacts around edges and a white background where transparency used to be.</p>
+            <span class="mistake-fix" style="background:var(--yellow);color:var(--black);">✓ Fix: Use PNG or WEBP for logos. Always. JPG is for photographs, not graphics.</span>
+          </div>
+        </div>
+
+        <!-- MISTAKE 3 -->
+        <div class="mistake-card" aria-label="Mistake 3">
+          <div class="mistake-header">
+            <div class="mistake-num" style="background:var(--cyan);color:var(--black);" aria-hidden="true">3</div>
+            <h2 class="mistake-title" style="margin:0;border:none;padding:0;">Not checking the output before downloading</h2>
+          </div>
+          <div class="mistake-body">
+            <p>You convert a file, it downloads automatically, and only after uploading it somewhere do you notice it looks terrible. Most online tools skip the preview step entirely.</p>
+            <span class="mistake-fix" style="background:var(--cyan);color:var(--black);">✓ Fix: Use Filezap's built-in preview. See the result first, download only if it looks right.</span>
+          </div>
+        </div>
+
+        <!-- MISTAKE 4 -->
+        <div class="mistake-card" aria-label="Mistake 4">
+          <div class="mistake-header">
+            <div class="mistake-num" style="background:var(--black);color:var(--yellow);" aria-hidden="true">4</div>
+            <h2 class="mistake-title" style="margin:0;border:none;padding:0;">Upscaling a small image and expecting it to look sharp</h2>
+          </div>
+          <div class="mistake-body">
+            <p>You can't get detail that wasn't there. Doubling the size of a 200×200 pixel image gives you a blurry 400×400 image. Conversion doesn't add pixels — it just stretches existing ones.</p>
+            <span class="mistake-fix" style="background:var(--black);color:var(--yellow);">✓ Fix: Only resize down, not up. For upscaling, use an AI upscaler first, then convert.</span>
+          </div>
+        </div>
+
+        <!-- MISTAKE 5 -->
+        <div class="mistake-card" aria-label="Mistake 5">
+          <div class="mistake-header">
+            <div class="mistake-num" style="background:var(--red);color:#fff;" aria-hidden="true">5</div>
+            <h2 class="mistake-title" style="margin:0;border:none;padding:0;">Ignoring the color profile when converting for print</h2>
+          </div>
+          <div class="mistake-body">
+            <p>Screens use RGB (red, green, blue light). Printers use CMYK (cyan, magenta, yellow, black ink). A vivid blue on screen might look dull or purple when printed, because the CMYK gamut can't reproduce all RGB colors.</p>
+            <span class="mistake-fix" style="background:var(--red);color:#fff;">✓ Fix: For anything going to print, convert to TIFF or PDF with a CMYK color profile. Ask your printer what they need.</span>
+          </div>
+        </div>
+
+        <!-- MISTAKE 6 -->
+        <div class="mistake-card" aria-label="Mistake 6">
+          <div class="mistake-header">
+            <div class="mistake-num" style="background:var(--yellow);color:var(--black);" aria-hidden="true">6</div>
+            <h2 class="mistake-title" style="margin:0;border:none;padding:0;">Converting GIF to MP4 and wondering why it's huge</h2>
+          </div>
+          <div class="mistake-body">
+            <p>GIF animations are notoriously large. But converting GIF → MP4 without compression settings can produce a file 10x larger than a well-compressed version. The conversion is right, the settings are wrong.</p>
+            <span class="mistake-fix" style="background:var(--yellow);color:var(--black);">✓ Fix: Use Filezap's quality slider when converting video. A CRF value around 23–28 gives a great size/quality balance.</span>
+          </div>
+        </div>
+
+        <!-- MISTAKE 7 -->
+        <div class="mistake-card" aria-label="Mistake 7">
+          <div class="mistake-header">
+            <div class="mistake-num" style="background:var(--cyan);color:var(--black);" aria-hidden="true">7</div>
+            <h2 class="mistake-title" style="margin:0;border:none;padding:0;">Using a random online tool and uploading sensitive files</h2>
+          </div>
+          <div class="mistake-body">
+            <p>Many "free" online converters upload your files to their servers, process them, and may store them indefinitely. If you're converting documents with personal info, contracts, or private photos — that's a real risk.</p>
+            <span class="mistake-fix" style="background:var(--cyan);color:var(--black);">✓ Fix: Filezap processes images directly in your browser. Nothing leaves your device for simple image conversions. Server-side conversions are deleted immediately after the session.</span>
+          </div>
+        </div>
+
+        <div class="callout callout-yellow">
+          <p class="callout-title">🏆 The Golden Rule</p>
+          <p>Always preview before downloading. If the converted file doesn't look right, adjust the settings and try again. Filezap's live preview is specifically designed to catch these problems before they become your problem.</p>
+        </div>
+
+        <div class="try-it-box" aria-label="Try the converter">
+          <h3>Put these tips to use ⚡</h3>
+          <p>Convert your files the right way — with a live preview, quality controls, and zero data storage.</p>
+          <a href="converter.html" class="btn-try">Open Converter →</a>
+        </div>
+      </div>
+
+      <aside class="related-section" aria-labelledby="related-label">
+        <h2 class="related-title" id="related-label">Keep reading</h2>
+        <div class="related-grid" role="list">
+          <a href="post-webp.html" class="related-card" role="listitem">
+            <span class="related-icon" aria-hidden="true">🌐</span>
+            <div><h4>What is WEBP?</h4><p>Format Guide · 5 min read</p></div>
+          </a>
+          <a href="post-pdf.html" class="related-card" role="listitem">
+            <span class="related-icon" aria-hidden="true">📕</span>
+            <div><h4>What is PDF and Why Can't You Edit It?</h4><p>Format Guide · 6 min read</p></div>
+          </a>
+        </div>
+      </aside>
+    </article>
+  </main>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    let dark = false;
+    toggle.addEventListener('click', () => { dark=!dark; document.documentElement.setAttribute('data-theme',dark?'dark':'light'); toggle.textContent=dark?'☀️':'🌙'; });
+    window.addEventListener('scroll', () => { const d=document.documentElement; document.getElementById('readProgress').style.width=(d.scrollTop/(d.scrollHeight-d.clientHeight)*100)+'%'; });
+  </script>
+</body>
+</html>

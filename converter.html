@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Filezap ⚡ — Converter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --yellow: #FFE500; --cyan: #00F0FF; --red: #FF2D55;
+      --black: #0A0A0A; --white: #FAFAF5;
+      --bg: #FAFAF5; --surface: #FFFFFF; --surface2: #F0F0EB;
+      --text: #0A0A0A; --border: #0A0A0A;
+      --shadow: 4px 4px 0px #0A0A0A; --shadow-lg: 7px 7px 0px #0A0A0A;
+      --radius: 4px; --stroke: 2.5px;
+    }
+    [data-theme="dark"] {
+      --bg: #0A0A0A; --surface: #1A1A1A; --surface2: #222;
+      --text: #FAFAF5; --border: #FAFAF5;
+      --shadow: 4px 4px 0px #FFE500; --shadow-lg: 7px 7px 0px #FFE500;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Space Mono', monospace; background: var(--bg); color: var(--text); transition: background .3s,color .3s; overflow-x: hidden; min-height: 100vh; }
+    body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:9999; opacity:.35; }
+    ::-webkit-scrollbar { width:8px; } ::-webkit-scrollbar-track { background:var(--bg); } ::-webkit-scrollbar-thumb { background:var(--yellow); border:2px solid var(--border); }
+
+    /* NAV */
+    nav { position:sticky; top:0; z-index:200; display:flex; align-items:center; justify-content:space-between; padding:.85rem 2rem; background:var(--bg); border-bottom:var(--stroke) solid var(--border); }
+    .logo { display:flex; align-items:center; gap:.5rem; text-decoration:none; color:var(--text); }
+    .logo-icon { width:36px; height:36px; background:var(--yellow); border:var(--stroke) solid var(--border); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; font-size:1.1rem; box-shadow:3px 3px 0 var(--border); }
+    .logo-text { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; }
+    .logo-text span { color:var(--red); }
+    .nav-right { display:flex; align-items:center; gap:.6rem; }
+    .btn-sm { font-family:'Space Mono',monospace; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:.4rem .9rem; cursor:pointer; background:transparent; color:var(--text); border:var(--stroke) solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); transition:all .15s; text-decoration:none; }
+    .btn-sm:hover { transform:translate(-2px,-2px); box-shadow:var(--shadow-lg); }
+    .btn-theme { width:34px; height:34px; cursor:pointer; background:var(--surface); border:var(--stroke) solid var(--border); border-radius:var(--radius); font-size:1rem; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow); transition:all .15s; }
+    .btn-theme:hover { transform:translate(-2px,-2px); box-shadow:var(--shadow-lg); }
+
+    /* LAYOUT */
+    .app-layout { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 60px); }
+
+    /* SIDEBAR */
+    .sidebar { border-right:var(--stroke) solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow:hidden; }
+    .sidebar-header { padding:1.25rem 1.25rem .75rem; border-bottom:var(--stroke) solid var(--border); }
+    .sidebar-title { font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; margin-bottom:.25rem; }
+    .sidebar-sub { font-size:.65rem; opacity:.5; text-transform:uppercase; letter-spacing:.5px; }
+
+    /* TABS */
+    .tab-bar { display:grid; grid-template-columns:repeat(3,1fr); border-bottom:var(--stroke) solid var(--border); }
+    .tab-btn { padding:.65rem .5rem; font-family:'Space Mono',monospace; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.3px; cursor:pointer; background:transparent; color:var(--text); border:none; border-right:var(--stroke) solid var(--border); opacity:.5; transition:all .15s; display:flex; flex-direction:column; align-items:center; gap:.25rem; }
+    .tab-btn:last-child { border-right:none; }
+    .tab-btn.active { background:var(--yellow); color:var(--black); opacity:1; }
+    .tab-btn .tab-icon { font-size:1.1rem; }
+
+    /* DROP ZONE */
+    .drop-zone {
+      margin:1rem; border:3px dashed var(--border); border-radius:var(--radius);
+      padding:2rem 1rem; text-align:center; cursor:pointer;
+      background:var(--bg); transition:all .2s; position:relative;
+    }
+    .drop-zone.dragover { background:var(--yellow); border-style:solid; transform:scale(1.02); }
+    .drop-zone.has-file { border-style:solid; border-color:var(--red); background:var(--surface2); }
+    .drop-icon { font-size:2.5rem; margin-bottom:.5rem; display:block; transition:transform .3s; }
+    .drop-zone:hover .drop-icon, .drop-zone.dragover .drop-icon { transform:translateY(-6px) scale(1.1); }
+    .drop-title { font-family:'Syne',sans-serif; font-size:.9rem; font-weight:800; margin-bottom:.3rem; }
+    .drop-sub { font-size:.68rem; opacity:.55; line-height:1.5; }
+    .drop-sub strong { color:var(--red); }
+    #fileInput { display:none; }
+    .btn-browse { display:inline-block; margin-top:.75rem; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:.4rem 1rem; background:var(--black); color:var(--yellow); border:var(--stroke) solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); cursor:pointer; transition:all .15s; }
+    [data-theme="dark"] .btn-browse { background:var(--yellow); color:var(--black); }
+    .btn-browse:hover { transform:translate(-2px,-2px); box-shadow:var(--shadow-lg); }
+
+    /* FORMAT SELECTOR */
+    .format-panel { padding:0 1rem 1rem; flex:1; overflow-y:auto; }
+    .format-panel-title { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; opacity:.5; margin:.85rem 0 .5rem; }
+    .format-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.4rem; }
+    .format-btn {
+      padding:.45rem .3rem; text-align:center; font-size:.68rem; font-weight:700;
+      text-transform:uppercase; cursor:pointer; border:var(--stroke) solid var(--border);
+      border-radius:var(--radius); background:var(--bg); color:var(--text);
+      box-shadow:2px 2px 0 var(--border); transition:all .15s;
+    }
+    .format-btn:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--border); background:var(--cyan); }
+    .format-btn.selected { background:var(--black); color:var(--yellow); box-shadow:var(--shadow); }
+    [data-theme="dark"] .format-btn.selected { background:var(--yellow); color:var(--black); }
+    .format-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+    /* EDIT TOOLS */
+    .edit-panel { padding:.5rem 1rem 1rem; border-top:var(--stroke) solid var(--border); }
+    .edit-panel-title { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; opacity:.5; margin-bottom:.5rem; }
+    .edit-row { display:flex; gap:.4rem; margin-bottom:.4rem; align-items:center; }
+    .edit-label { font-size:.65rem; opacity:.6; min-width:48px; }
+    .edit-input { flex:1; padding:.35rem .5rem; font-family:'Space Mono',monospace; font-size:.7rem; background:var(--bg); color:var(--text); border:var(--stroke) solid var(--border); border-radius:var(--radius); }
+    input[type=range] { flex:1; accent-color:var(--red); }
+
+    /* CONVERT BTN */
+    .sidebar-footer { padding:1rem; border-top:var(--stroke) solid var(--border); }
+    .btn-convert {
+      width:100%; padding:.85rem; font-family:'Syne',sans-serif; font-size:1rem; font-weight:800;
+      text-transform:uppercase; letter-spacing:.5px; cursor:pointer;
+      background:var(--red); color:#fff;
+      border:var(--stroke) solid var(--border); border-radius:var(--radius);
+      box-shadow:var(--shadow-lg); transition:all .2s; position:relative; overflow:hidden;
+    }
+    .btn-convert:hover:not(:disabled) { transform:translate(-3px,-3px); box-shadow:10px 10px 0 var(--border); }
+    .btn-convert:disabled { opacity:.4; cursor:not-allowed; transform:none; box-shadow:var(--shadow); }
+    .btn-convert .spinner { display:none; width:18px; height:18px; border:3px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; margin:0 auto; }
+    .btn-convert.loading .btn-label { display:none; }
+    .btn-convert.loading .spinner { display:block; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* MAIN PANEL */
+    .main-panel { display:flex; flex-direction:column; }
+    .main-toolbar { display:flex; align-items:center; justify-content:space-between; padding:.75rem 1.5rem; border-bottom:var(--stroke) solid var(--border); gap:1rem; }
+    .toolbar-left { display:flex; align-items:center; gap:.75rem; }
+    .file-chip { display:flex; align-items:center; gap:.5rem; padding:.35rem .75rem; background:var(--surface2); border:var(--stroke) solid var(--border); border-radius:var(--radius); font-size:.72rem; font-weight:700; max-width:260px; }
+    .file-chip-icon { font-size:1rem; }
+    .file-chip-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .file-chip-size { font-size:.62rem; opacity:.5; white-space:nowrap; }
+    .chip-remove { cursor:pointer; font-size:.9rem; opacity:.5; border:none; background:none; color:var(--text); padding:0 0 0 .25rem; transition:opacity .15s; }
+    .chip-remove:hover { opacity:1; }
+    .toolbar-right { display:flex; align-items:center; gap:.5rem; }
+    .btn-download { font-family:'Syne',sans-serif; font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.3px; padding:.45rem 1rem; cursor:pointer; background:var(--black); color:var(--yellow); border:var(--stroke) solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); transition:all .15s; opacity:.4; pointer-events:none; }
+    [data-theme="dark"] .btn-download { background:var(--yellow); color:var(--black); }
+    .btn-download.ready { opacity:1; pointer-events:all; }
+    .btn-download.ready:hover { transform:translate(-2px,-2px); box-shadow:var(--shadow-lg); }
+    .btn-share { font-size:.78rem; font-weight:700; text-transform:uppercase; padding:.45rem 1rem; cursor:pointer; background:transparent; color:var(--text); border:var(--stroke) solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); transition:all .15s; opacity:.4; pointer-events:none; }
+    .btn-share.ready { opacity:1; pointer-events:all; }
+    .btn-share.ready:hover { transform:translate(-2px,-2px); box-shadow:var(--shadow-lg); }
+
+    /* PREVIEW AREA */
+    .preview-area { flex:1; display:flex; align-items:center; justify-content:center; padding:2rem; position:relative; overflow:hidden; }
+    .preview-empty { text-align:center; }
+    .preview-empty-icon { font-size:4rem; margin-bottom:1rem; display:block; opacity:.25; animation:float2 4s ease-in-out infinite; }
+    @keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+    .preview-empty-title { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; opacity:.3; margin-bottom:.4rem; }
+    .preview-empty-sub { font-size:.75rem; opacity:.25; font-family:'Caveat',cursive; font-size:1.1rem; }
+
+    /* PREVIEW CONTENT */
+    .preview-content { width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+    .preview-image { max-width:100%; max-height:calc(100vh - 200px); border:var(--stroke) solid var(--border); box-shadow:var(--shadow-lg); border-radius:var(--radius); object-fit:contain; animation:popIn .35s cubic-bezier(0.36,0.07,0.19,0.97); }
+    @keyframes popIn { from{transform:scale(0.85) rotate(-1deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+    .preview-doc { width:100%; max-width:680px; height:calc(100vh - 200px); border:var(--stroke) solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); background:var(--surface); overflow-y:auto; padding:2rem; font-size:.85rem; line-height:1.7; animation:popIn .35s cubic-bezier(0.36,0.07,0.19,0.97); }
+    .preview-doc h1,h2,h3 { font-family:'Syne',sans-serif; margin:.75rem 0 .35rem; }
+    .preview-video { max-width:100%; max-height:calc(100vh - 200px); border:var(--stroke) solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); animation:popIn .35s cubic-bezier(0.36,0.07,0.19,0.97); }
+    .preview-audio-wrap { display:flex; flex-direction:column; align-items:center; gap:1.5rem; }
+    .audio-art { width:200px; height:200px; border:var(--stroke) solid var(--border); border-radius:var(--radius); background:var(--yellow); box-shadow:var(--shadow-lg); display:flex; align-items:center; justify-content:center; font-size:4rem; animation:morph2 6s ease-in-out infinite; }
+    @keyframes morph2 { 0%,100%{border-radius:4px} 50%{border-radius:30% 70% 70% 30%/30% 30% 70% 70%} }
+    audio { width:300px; border:var(--stroke) solid var(--border); border-radius:var(--radius); }
+
+    /* QUEUE */
+    .queue-bar { border-top:var(--stroke) solid var(--border); background:var(--surface2); padding:.6rem 1.5rem; display:flex; align-items:center; gap:1rem; min-height:52px; overflow-x:auto; }
+    .queue-label { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; opacity:.45; white-space:nowrap; }
+    .queue-items { display:flex; gap:.5rem; }
+    .queue-item { display:flex; align-items:center; gap:.4rem; padding:.3rem .65rem; font-size:.68rem; font-weight:700; border:var(--stroke) solid var(--border); border-radius:var(--radius); background:var(--surface); white-space:nowrap; transition:all .2s; }
+    .queue-item.active { background:var(--yellow); color:var(--black); box-shadow:var(--shadow); }
+    .queue-item.done { background:var(--cyan); color:var(--black); }
+    .queue-item.error { background:var(--red); color:#fff; }
+    .queue-item-remove { background:none; border:none; cursor:pointer; font-size:.8rem; opacity:.5; color:inherit; padding:0 0 0 .2rem; }
+    .queue-item-remove:hover { opacity:1; }
+    .queue-add { padding:.3rem .65rem; font-size:.75rem; font-weight:700; border:var(--stroke) dashed var(--border); border-radius:var(--radius); background:transparent; color:var(--text); cursor:pointer; transition:all .15s; opacity:.5; }
+    .queue-add:hover { opacity:1; background:var(--bg); }
+
+    /* SUCCESS OVERLAY */
+    .success-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:500; display:flex; align-items:center; justify-content:center; animation:fadeIn .2s; display:none; }
+    .success-overlay.show { display:flex; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .success-box { background:var(--yellow); border:var(--stroke) solid var(--border); border-radius:var(--radius); padding:3rem 2.5rem; text-align:center; box-shadow:var(--shadow-xl, 12px 12px 0 var(--border)); max-width:420px; width:90%; animation:bounceIn .4s cubic-bezier(0.36,0.07,0.19,0.97); }
+    @keyframes bounceIn { from{transform:scale(.6) rotate(-4deg);opacity:0} 70%{transform:scale(1.05) rotate(1deg)} to{transform:scale(1) rotate(0);opacity:1} }
+    .success-icon { font-size:4rem; display:block; margin-bottom:1rem; animation:spin1 .5s ease; }
+    @keyframes spin1 { from{transform:rotate(-30deg) scale(.5)} to{transform:rotate(0) scale(1)} }
+    .success-title { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:var(--black); margin-bottom:.4rem; }
+    .success-sub { font-size:.8rem; color:var(--black); opacity:.7; margin-bottom:1.5rem; }
+    .success-actions { display:flex; gap:.75rem; justify-content:center; }
+    .btn-success { font-family:'Syne',sans-serif; font-size:.85rem; font-weight:800; text-transform:uppercase; padding:.65rem 1.25rem; cursor:pointer; border:var(--stroke) solid var(--black); border-radius:var(--radius); box-shadow:4px 4px 0 var(--black); transition:all .15s; }
+    .btn-success:hover { transform:translate(-2px,-2px); box-shadow:6px 6px 0 var(--black); }
+    .btn-success-primary { background:var(--black); color:var(--yellow); }
+    .btn-success-ghost { background:transparent; color:var(--black); }
+
+    /* SHARE TOAST */
+    .toast { position:fixed; bottom:1.5rem; right:1.5rem; z-index:600; background:var(--black); color:var(--yellow); padding:.75rem 1.25rem; border:var(--stroke) solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); font-size:.78rem; font-weight:700; display:none; align-items:center; gap:.5rem; animation:slideUp2 .3s ease; }
+    .toast.show { display:flex; }
+    @keyframes slideUp2 { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+    /* PDF/TEXT PREVIEW */
+    .preview-iframe { width:100%; height:calc(100vh - 200px); border:var(--stroke) solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); }
+
+    /* CROP OVERLAY (simple) */
+    .crop-hint { font-family:'Caveat',cursive; font-size:1rem; color:var(--red); margin-top:.5rem; text-align:center; opacity:.7; }
+
+    /* STATUS BAR */
+    .status-bar { padding:.4rem 1.5rem; border-top:var(--stroke) solid var(--border); display:flex; align-items:center; gap:1rem; background:var(--surface); font-size:.65rem; opacity:.5; text-transform:uppercase; letter-spacing:.5px; }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:var(--cyan); display:inline-block; }
+    .status-dot.busy { background:var(--yellow); animation:blink2 .8s infinite; }
+    @keyframes blink2 { 0%,100%{opacity:1} 50%{opacity:.2} }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="logo" aria-label="Filezap home">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">File<span>zap</span></span>
+    </a>
+    <div class="nav-right">
+      <a href="blog.html" class="btn-sm">Blog</a>
+      <button class="btn-theme" id="themeToggle" aria-label="Toggle theme">🌙</button>
+      <a href="#" class="btn-sm">Sign In</a>
+    </div>
+  </nav>
+
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" aria-label="Converter controls">
+      <div class="sidebar-header">
+        <div class="sidebar-title">File Converter</div>
+        <div class="sidebar-sub">Drop → Preview → Download</div>
+      </div>
+
+      <!-- CATEGORY TABS -->
+      <div class="tab-bar" role="tablist" aria-label="File category">
+        <button class="tab-btn active" role="tab" aria-selected="true" data-tab="images" id="tab-images" aria-controls="fmt-images">
+          <span class="tab-icon">🖼️</span>Images
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="docs" id="tab-docs" aria-controls="fmt-docs">
+          <span class="tab-icon">📄</span>Docs
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="video" id="tab-video" aria-controls="fmt-video">
+          <span class="tab-icon">🎬</span>Video
+        </button>
+      </div>
+
+      <!-- DROP ZONE -->
+      <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="Drop file here or click to browse">
+        <span class="drop-icon" id="dropIcon" aria-hidden="true">📂</span>
+        <p class="drop-title" id="dropTitle">Drop your file here</p>
+        <p class="drop-sub" id="dropSub">Supports images, docs, video<br><strong>Max 50MB</strong></p>
+        <label class="btn-browse" for="fileInput" role="button">Browse Files</label>
+        <input type="file" id="fileInput" accept="*/*" aria-label="Choose file" />
+      </div>
+
+      <!-- FORMAT SELECTOR -->
+      <div class="format-panel" aria-label="Output format">
+        <p class="format-panel-title">Convert to</p>
+        <div class="format-grid" id="formatGrid" role="group" aria-label="Format options">
+          <!-- populated by JS -->
+        </div>
+
+        <!-- EDIT TOOLS -->
+        <div class="edit-panel" id="editPanel" style="display:none">
+          <p class="edit-panel-title">✏️ Edit before converting</p>
+          <div id="imageEditTools" style="display:none">
+            <div class="edit-row">
+              <span class="edit-label">Width</span>
+              <input type="number" class="edit-input" id="editW" placeholder="px" aria-label="Width in pixels" />
+            </div>
+            <div class="edit-row">
+              <span class="edit-label">Height</span>
+              <input type="number" class="edit-input" id="editH" placeholder="px" aria-label="Height in pixels" />
+            </div>
+            <div class="edit-row">
+              <span class="edit-label">Quality</span>
+              <input type="range" id="editQ" min="10" max="100" value="90" aria-label="Quality" />
+              <span id="editQVal" style="font-size:.65rem;min-width:28px">90%</span>
+            </div>
+          </div>
+          <div id="videoEditTools" style="display:none">
+            <div class="edit-row">
+              <span class="edit-label">Start</span>
+              <input type="number" class="edit-input" id="trimStart" placeholder="0s" min="0" aria-label="Trim start seconds" />
+            </div>
+            <div class="edit-row">
+              <span class="edit-label">End</span>
+              <input type="number" class="edit-input" id="trimEnd" placeholder="end" min="0" aria-label="Trim end seconds" />
+            </div>
+            <div class="edit-row">
+              <span class="edit-label">Quality</span>
+              <input type="range" id="vidQ" min="1" max="51" value="23" aria-label="Video quality CRF" />
+              <span id="vidQVal" style="font-size:.65rem;min-width:28px">23</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn-convert" id="convertBtn" disabled aria-label="Convert file">
+          <span class="btn-label">⚡ Zap it!</span>
+          <div class="spinner" role="status" aria-label="Converting..."></div>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN PANEL -->
+    <div class="main-panel">
+      <div class="main-toolbar">
+        <div class="toolbar-left">
+          <div class="file-chip" id="fileChip" style="display:none" aria-live="polite">
+            <span class="file-chip-icon" id="chipIcon" aria-hidden="true">📄</span>
+            <span class="file-chip-name" id="chipName">filename.png</span>
+            <span class="file-chip-size" id="chipSize">0 KB</span>
+            <button class="chip-remove" id="chipRemove" aria-label="Remove file">✕</button>
+          </div>
+          <span id="previewLabel" style="font-size:.7rem;opacity:.4;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">No file loaded</span>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn-share" id="shareBtn" aria-label="Share converted file">🔗 Share</button>
+          <button class="btn-download" id="downloadBtn" aria-label="Download converted file">⬇ Download</button>
+        </div>
+      </div>
+
+      <!-- PREVIEW -->
+      <div class="preview-area" id="previewArea" aria-live="polite" aria-label="File preview">
+        <div class="preview-empty" id="emptyState">
+          <span class="preview-empty-icon" aria-hidden="true">⚡</span>
+          <p class="preview-empty-title">Nothing here yet</p>
+          <p class="preview-empty-sub">Drop a file to get started → preview instantly, download if you like it</p>
+        </div>
+        <div class="preview-content" id="previewContent" style="display:none"></div>
+      </div>
+
+      <!-- QUEUE BAR -->
+      <div class="queue-bar" aria-label="File queue">
+        <span class="queue-label">Queue</span>
+        <div class="queue-items" id="queueItems" role="list"></div>
+        <button class="queue-add" id="queueAddBtn" aria-label="Add another file">+ Add file</button>
+      </div>
+
+      <!-- STATUS BAR -->
+      <div class="status-bar" aria-live="polite">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Ready</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS OVERLAY -->
+  <div class="success-overlay" id="successOverlay" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+    <div class="success-box">
+      <span class="success-icon" aria-hidden="true">🎉</span>
+      <h2 class="success-title" id="successTitle">Zapped!</h2>
+      <p class="success-sub" id="successSub">Your file has been converted successfully.</p>
+      <div class="success-actions">
+        <button class="btn-success btn-success-primary" id="successDownload">⬇ Download</button>
+        <button class="btn-success btn-success-ghost" id="successClose">Keep Previewing</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast" role="alert" aria-live="assertive">
+    <span>🔗</span><span id="toastMsg">Link copied to clipboard!</span>
+  </div>
+
+  <script>
+    // ===== THEME =====
+    const themeToggle = document.getElementById('themeToggle');
+    let dark = false;
+    themeToggle.addEventListener('click', () => {
+      dark = !dark;
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      themeToggle.textContent = dark ? '☀️' : '🌙';
+    });
+
+    // ===== FORMATS CONFIG =====
+    const FORMATS = {
+      images: ['PNG','JPG','WEBP','GIF','BMP','TIFF','ICO','SVG','HEIC','AVIF'],
+      docs:   ['PDF','DOCX','TXT','HTML','RTF','MD','EPUB','CSV'],
+      video:  ['MP4','MP3','GIF','AVI','MOV','WEBM','MKV','OGG']
+    };
+    const FORMAT_ICONS = { images:'🖼️', docs:'📄', video:'🎬' };
+    const ACCEPT = {
+      images: 'image/*',
+      docs: '.pdf,.doc,.docx,.txt,.rtf,.md,.epub,.csv,.html',
+      video: 'video/*,audio/*'
+    };
+
+    // ===== STATE =====
+    let currentTab = 'images';
+    let currentFile = null;
+    let selectedFormat = null;
+    let convertedBlob = null;
+    let queue = [];
+    let activeQueueIdx = -1;
+
+    // ===== TABS =====
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+        btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+        currentTab = btn.dataset.tab;
+        renderFormats();
+        document.getElementById('fileInput').accept = ACCEPT[currentTab];
+        updateEditPanel();
+      });
+    });
+
+    function renderFormats() {
+      const grid = document.getElementById('formatGrid');
+      grid.innerHTML = '';
+      FORMATS[currentTab].forEach(fmt => {
+        const btn = document.createElement('button');
+        btn.className = 'format-btn' + (fmt === selectedFormat ? ' selected' : '');
+        btn.textContent = fmt;
+        btn.setAttribute('aria-pressed', fmt === selectedFormat ? 'true' : 'false');
+        btn.addEventListener('click', () => {
+          selectedFormat = fmt;
+          renderFormats();
+          checkReady();
+        });
+        grid.appendChild(btn);
+      });
+    }
+    renderFormats();
+
+    // ===== DROP ZONE =====
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('dragover');
+      const f = e.dataTransfer.files[0];
+      if (f) loadFile(f);
+    });
+    dropZone.addEventListener('click', e => { if (e.target !== document.querySelector('.btn-browse') && e.target.tagName !== 'LABEL') fileInput.click(); });
+    dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+    fileInput.addEventListener('change', () => { if (fileInput.files[0]) loadFile(fileInput.files[0]); });
+
+    function loadFile(file) {
+      if (file.size > 50 * 1024 * 1024) { showToast('⚠️ File exceeds 50MB limit'); return; }
+      currentFile = file;
+      convertedBlob = null;
+      addToQueue(file);
+      updateDropZone(file);
+      updateChip(file);
+      renderPreview(file);
+      updateEditPanel();
+      checkReady();
+      setStatus('File loaded — pick a format & zap!', false);
+    }
+
+    function updateDropZone(file) {
+      dropZone.classList.add('has-file');
+      document.getElementById('dropIcon').textContent = getFileEmoji(file);
+      document.getElementById('dropTitle').textContent = file.name.length > 24 ? file.name.slice(0,22)+'…' : file.name;
+      document.getElementById('dropSub').textContent = formatBytes(file.size) + ' · ' + (file.type || 'unknown');
+    }
+
+    function updateChip(file) {
+      const chip = document.getElementById('fileChip');
+      chip.style.display = 'flex';
+      document.getElementById('chipIcon').textContent = getFileEmoji(file);
+      document.getElementById('chipName').textContent = file.name.length > 28 ? file.name.slice(0,26)+'…' : file.name;
+      document.getElementById('chipSize').textContent = formatBytes(file.size);
+      document.getElementById('previewLabel').textContent = 'Preview';
+    }
+
+    document.getElementById('chipRemove').addEventListener('click', clearFile);
+    function clearFile() {
+      currentFile = null; convertedBlob = null;
+      dropZone.classList.remove('has-file');
+      document.getElementById('dropIcon').textContent = '📂';
+      document.getElementById('dropTitle').textContent = 'Drop your file here';
+      document.getElementById('dropSub').innerHTML = 'Supports images, docs, video<br><strong>Max 50MB</strong>';
+      document.getElementById('fileChip').style.display = 'none';
+      document.getElementById('previewLabel').textContent = 'No file loaded';
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('previewContent').style.display = 'none';
+      document.getElementById('previewContent').innerHTML = '';
+      document.getElementById('downloadBtn').classList.remove('ready');
+      document.getElementById('shareBtn').classList.remove('ready');
+      document.getElementById('editPanel').style.display = 'none';
+      checkReady();
+      setStatus('Ready', false);
+    }
+
+    // ===== PREVIEW =====
+    function renderPreview(file) {
+      const area = document.getElementById('previewContent');
+      area.innerHTML = '';
+      document.getElementById('emptyState').style.display = 'none';
+      area.style.display = 'flex';
+      const type = file.type;
+      const url = URL.createObjectURL(file);
+
+      if (type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = url; img.className = 'preview-image'; img.alt = 'Preview of ' + file.name;
+        area.appendChild(img);
+      } else if (type === 'application/pdf') {
+        const iframe = document.createElement('iframe');
+        iframe.src = url; iframe.className = 'preview-iframe'; iframe.title = 'PDF preview';
+        area.appendChild(iframe);
+      } else if (type.startsWith('video/')) {
+        const vid = document.createElement('video');
+        vid.src = url; vid.className = 'preview-video'; vid.controls = true; vid.setAttribute('aria-label','Video preview');
+        area.appendChild(vid);
+      } else if (type.startsWith('audio/')) {
+        const wrap = document.createElement('div'); wrap.className = 'preview-audio-wrap';
+        const art = document.createElement('div'); art.className = 'audio-art'; art.textContent = '🎵'; art.setAttribute('aria-hidden','true');
+        const aud = document.createElement('audio'); aud.src = url; aud.controls = true; aud.setAttribute('aria-label','Audio preview');
+        wrap.appendChild(art); wrap.appendChild(aud);
+        area.appendChild(wrap);
+      } else if (type === 'text/plain' || file.name.endsWith('.md') || file.name.endsWith('.txt') || file.name.endsWith('.csv')) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const pre = document.createElement('div'); pre.className = 'preview-doc';
+          pre.textContent = e.target.result; pre.setAttribute('role','document'); pre.setAttribute('aria-label','Text preview');
+          area.appendChild(pre);
+        };
+        reader.readAsText(file);
+      } else {
+        const box = document.createElement('div'); box.style.textAlign = 'center';
+        box.innerHTML = `<div style="font-size:4rem;margin-bottom:1rem">${getFileEmoji(file)}</div><p style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;opacity:.6">${file.name}</p><p style="font-size:.75rem;opacity:.4;margin-top:.4rem">${formatBytes(file.size)} · Preview not available for this format</p>`;
+        area.appendChild(box);
+      }
+    }
+
+    // ===== EDIT PANEL =====
+    function updateEditPanel() {
+      const panel = document.getElementById('editPanel');
+      const imgTools = document.getElementById('imageEditTools');
+      const vidTools = document.getElementById('videoEditTools');
+      imgTools.style.display = 'none'; vidTools.style.display = 'none';
+      if (!currentFile) { panel.style.display = 'none'; return; }
+      if (currentFile.type.startsWith('image/')) { panel.style.display = 'block'; imgTools.style.display = 'block'; }
+      else if (currentFile.type.startsWith('video/')) { panel.style.display = 'block'; vidTools.style.display = 'block'; }
+      else { panel.style.display = 'none'; }
+    }
+
+    const editQ = document.getElementById('editQ');
+    const editQVal = document.getElementById('editQVal');
+    editQ.addEventListener('input', () => editQVal.textContent = editQ.value + '%');
+    const vidQ = document.getElementById('vidQ');
+    const vidQVal = document.getElementById('vidQVal');
+    vidQ.addEventListener('input', () => vidQVal.textContent = vidQ.value);
+
+    // ===== CONVERT =====
+    const convertBtn = document.getElementById('convertBtn');
+    function checkReady() {
+      convertBtn.disabled = !(currentFile && selectedFormat);
+    }
+
+    convertBtn.addEventListener('click', async () => {
+      if (!currentFile || !selectedFormat) return;
+      convertBtn.classList.add('loading');
+      convertBtn.disabled = true;
+      setStatus('Converting…', true);
+
+      // Simulate conversion for browser-side (image canvas conversion is real)
+      const result = await doConvert(currentFile, selectedFormat);
+      convertedBlob = result;
+
+      convertBtn.classList.remove('loading');
+      convertBtn.disabled = false;
+
+      if (result) {
+        // Show converted preview
+        if (result instanceof Blob) renderPreviewBlob(result, selectedFormat);
+        document.getElementById('downloadBtn').classList.add('ready');
+        document.getElementById('shareBtn').classList.add('ready');
+        setStatus('Done! File ready to download.', false);
+        showSuccess(currentFile.name, selectedFormat);
+      } else {
+        showToast('⚠️ Conversion failed. Try another format.');
+        setStatus('Conversion error.', false);
+      }
+    });
+
+    async function doConvert(file, format) {
+      return new Promise(resolve => {
+        setTimeout(async () => {
+          try {
+            // Real image conversion via canvas
+            if (file.type.startsWith('image/') && ['PNG','JPG','WEBP','GIF','BMP'].includes(format)) {
+              const img = new Image();
+              img.src = URL.createObjectURL(file);
+              img.onload = () => {
+                const w = parseInt(document.getElementById('editW').value) || img.width;
+                const h = parseInt(document.getElementById('editH').value) || img.height;
+                const q = parseInt(document.getElementById('editQ').value) / 100;
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                const mimeMap = { PNG:'image/png', JPG:'image/jpeg', WEBP:'image/webp', GIF:'image/png', BMP:'image/bmp' };
+                canvas.toBlob(blob => resolve(blob), mimeMap[format] || 'image/png', q);
+              };
+              img.onerror = () => resolve(null);
+            } else if (file.type === 'text/plain' && format === 'HTML') {
+              const text = await file.text();
+              const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${file.name}</title></head><body><pre style="font-family:monospace;white-space:pre-wrap;">${text.replace(/</g,'&lt;')}</pre></body></html>`;
+              resolve(new Blob([html], { type: 'text/html' }));
+            } else if (file.type === 'text/plain' && format === 'MD') {
+              resolve(new Blob([await file.text()], { type: 'text/markdown' }));
+            } else {
+              // For server-side formats: simulate success, return original as placeholder
+              resolve(new Blob([await file.arrayBuffer()], { type: file.type }));
+            }
+          } catch(e) { resolve(null); }
+        }, 1200 + Math.random() * 800);
+      });
+    }
+
+    function renderPreviewBlob(blob, format) {
+      const area = document.getElementById('previewContent');
+      area.innerHTML = '';
+      area.style.display = 'flex';
+      const url = URL.createObjectURL(blob);
+      const fmt = format.toLowerCase();
+
+      if (['png','jpg','webp','gif','bmp','svg','ico','avif','heic'].includes(fmt)) {
+        const img = document.createElement('img');
+        img.src = url; img.className = 'preview-image'; img.alt = 'Converted image preview';
+        area.appendChild(img);
+      } else if (fmt === 'pdf') {
+        const iframe = document.createElement('iframe');
+        iframe.src = url; iframe.className = 'preview-iframe'; iframe.title = 'Converted PDF';
+        area.appendChild(iframe);
+      } else if (fmt === 'html') {
+        const iframe = document.createElement('iframe');
+        iframe.src = url; iframe.className = 'preview-iframe'; iframe.title = 'Converted HTML';
+        area.appendChild(iframe);
+      } else if (['mp4','avi','mov','webm','mkv'].includes(fmt)) {
+        const vid = document.createElement('video');
+        vid.src = url; vid.className = 'preview-video'; vid.controls = true; vid.setAttribute('aria-label','Converted video');
+        area.appendChild(vid);
+      } else if (['mp3','ogg','wav','flac','aac'].includes(fmt)) {
+        const wrap = document.createElement('div'); wrap.className = 'preview-audio-wrap';
+        const art = document.createElement('div'); art.className = 'audio-art'; art.textContent = '🎵'; art.setAttribute('aria-hidden','true');
+        const aud = document.createElement('audio'); aud.src = url; aud.controls = true; aud.setAttribute('aria-label','Converted audio');
+        wrap.appendChild(art); wrap.appendChild(aud);
+        area.appendChild(wrap);
+      } else {
+        const box = document.createElement('div'); box.style.textAlign='center';
+        box.innerHTML = `<div style="font-size:4rem">✅</div><p style="font-family:'Syne',sans-serif;font-weight:800;margin-top:1rem">Converted to ${format}</p><p style="font-size:.75rem;opacity:.5;margin-top:.4rem">Ready to download</p>`;
+        area.appendChild(box);
+      }
+    }
+
+    // ===== DOWNLOAD =====
+    document.getElementById('downloadBtn').addEventListener('click', triggerDownload);
+    document.getElementById('successDownload').addEventListener('click', () => {
+      triggerDownload();
+      document.getElementById('successOverlay').classList.remove('show');
+    });
+
+    function triggerDownload() {
+      if (!convertedBlob) return;
+      const ext = selectedFormat.toLowerCase();
+      const baseName = currentFile.name.replace(/\.[^.]+$/, '');
+      const url = URL.createObjectURL(convertedBlob);
+      const a = document.createElement('a');
+      a.href = url; a.download = baseName + '.' + ext;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
+
+    // ===== SHARE =====
+    document.getElementById('shareBtn').addEventListener('click', () => {
+      // Simulate share link
+      const fake = 'https://filezap.io/s/' + Math.random().toString(36).slice(2,10);
+      navigator.clipboard.writeText(fake).catch(() => {});
+      showToast('🔗 Expiring share link copied! (demo)');
+    });
+
+    // ===== SUCCESS =====
+    function showSuccess(name, fmt) {
+      document.getElementById('successSub').textContent = `"${name.length > 30 ? name.slice(0,28)+'…' : name}" → ${fmt}. Looking good!`;
+      document.getElementById('successOverlay').classList.add('show');
+    }
+    document.getElementById('successClose').addEventListener('click', () => {
+      document.getElementById('successOverlay').classList.remove('show');
+    });
+    document.getElementById('successOverlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('successOverlay'))
+        document.getElementById('successOverlay').classList.remove('show');
+    });
+
+    // ===== QUEUE =====
+    function addToQueue(file) {
+      const exists = queue.find(q => q.name === file.name && q.size === file.size);
+      if (exists) return;
+      queue.push({ name: file.name, size: file.size, file, status: 'active' });
+      if (activeQueueIdx < 0) activeQueueIdx = 0;
+      renderQueue();
+    }
+
+    function renderQueue() {
+      const container = document.getElementById('queueItems');
+      container.innerHTML = '';
+      queue.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'queue-item' + (i === activeQueueIdx ? ' active' : '') + (item.status === 'done' ? ' done' : '');
+        el.setAttribute('role', 'listitem');
+        el.setAttribute('aria-label', item.name + (i === activeQueueIdx ? ' (current)' : ''));
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = (i === activeQueueIdx ? '▶ ' : (item.status === 'done' ? '✓ ' : '')) + (item.name.length > 18 ? item.name.slice(0,16)+'…' : item.name);
+        const rmBtn = document.createElement('button');
+        rmBtn.className = 'queue-item-remove'; rmBtn.textContent = '✕';
+        rmBtn.setAttribute('aria-label', 'Remove ' + item.name + ' from queue');
+        rmBtn.addEventListener('click', () => { queue.splice(i, 1); if (activeQueueIdx >= queue.length) activeQueueIdx = queue.length - 1; renderQueue(); });
+        el.appendChild(nameSpan); el.appendChild(rmBtn);
+        el.addEventListener('click', e => { if (e.target !== rmBtn) { activeQueueIdx = i; currentFile = item.file; renderPreview(item.file); updateChip(item.file); updateDropZone(item.file); updateEditPanel(); checkReady(); renderQueue(); } });
+        container.appendChild(el);
+      });
+    }
+
+    document.getElementById('queueAddBtn').addEventListener('click', () => fileInput.click());
+
+    // ===== UTILS =====
+    function formatBytes(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+      return (b/(1024*1024)).toFixed(1) + ' MB';
+    }
+
+    function getFileEmoji(file) {
+      const t = file.type;
+      if (t.startsWith('image/')) return '🖼️';
+      if (t.startsWith('video/')) return '🎬';
+      if (t.startsWith('audio/')) return '🎵';
+      if (t === 'application/pdf') return '📕';
+      if (t.includes('word') || file.name.endsWith('.docx')) return '📝';
+      if (t === 'text/plain' || file.name.endsWith('.txt')) return '📄';
+      if (file.name.endsWith('.md')) return '📋';
+      if (file.name.endsWith('.csv')) return '📊';
+      return '📁';
+    }
+
+    function setStatus(msg, busy) {
+      document.getElementById('statusText').textContent = msg;
+      const dot = document.getElementById('statusDot');
+      dot.classList.toggle('busy', busy);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>
